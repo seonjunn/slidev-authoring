@@ -1,16 +1,24 @@
 # Slidev Authoring
 
-A small Slidev addon for Markdown citations and editable figure highlights. The theme controls the slide design; the deck owns its figures, notes, bibliography, and annotation data.
+Markdown citations and a visual figure-highlight editor for Slidev. Annotations and bibliography data are stored in the deck.
 
-Requires Node.js 22.12+ and Slidev 52.19.1. Tested with Slidev 52.19.1, Vue 3.5, and Vite 8.2.2. It does not require the HCS theme.
+**Requirements:** Node.js 22.12+ and Slidev 52.19.1. Tested with Vue 3.5 and Vite 8.2.2.
 
-## Install
+[Setup](#setup) · [Editing](#edit-highlights) · [Configuration](#configuration)
+
+## Setup
+
+### 1. Install the addon
 
 ```sh
 npm install -D github:seonjunn/slidev-authoring
 ```
 
-Commit `package-lock.json` to pin the package revision. Add this to the deck's first frontmatter block:
+Commit `package-lock.json` to pin the installed revision.
+
+### 2. Enable it in the deck
+
+Add the addon to the first frontmatter block in `slides.md`:
 
 ```yaml
 addons:
@@ -28,7 +36,15 @@ export default authoring({
 })
 ```
 
-Put images in `public/figures/`. Create `annotations.json` with `{}` and `references.json` with your bibliography:
+### 3. Add the deck data
+
+| File | Contents |
+| --- | --- |
+| `public/figures/` | Images displayed in slides |
+| `annotations.json` | Start with `{}`; the editor writes highlights here |
+| `references.json` | Bibliography entries keyed by citation number |
+
+Example `references.json`:
 
 ```json
 {
@@ -40,7 +56,7 @@ Put images in `public/figures/`. Create `annotations.json` with `{}` and `refere
 }
 ```
 
-Use ordinary Markdown:
+### 4. Write Markdown
 
 ```md
 ---
@@ -55,23 +71,64 @@ clicks: 1
 ![Figure caption](/figures/example.png)
 ```
 
-Numeric citations become superscripts and a bibliography footer. Local `/figures/` images become editable figures. Other images keep Slidev's default rendering. Annotations are stored in source-image percentages and follow the slide's `contentId`, so reordering slides preserves them.
+`[1]` becomes a superscript citation and a bibliography footer. An image under `/figures/` becomes an editable figure. Use a layout with a figure area, or set a height for `.authoring-visual` in the deck's CSS.
 
 ## Edit highlights
 
-Run the deck's Slidev dev server, hover over a figure, and select **그림 강조 편집**. The editor supports multiple regions per click step, drag, resize, keyboard movement, undo/redo, preview, and save. Its current interface is Korean. Saving changes only the deck's annotation JSON. Concurrent edits to the same figure are rejected rather than overwritten.
+1. Start the deck's Slidev dev server and open a slide containing a figure.
+2. Hover over the figure and select **그림 강조 편집**.
+3. Choose the click step, then select an existing region or add one.
+4. Drag to move a region; use its corner handles to resize it.
+5. Preview the result and select **저장** to save.
 
-The editor currently supports one editable figure per `contentId` and up to 40 click states. Set a unique `contentId` and the intended `clicks` in Markdown before editing. Image coordinates must be checked again if the image's crop changes. Mermaid structure editing is outside this addon.
+![Figure editor showing a selected region, click-step selector, preview, and save controls](guide/images/figure-editor.png)
 
-The editor and write endpoint exist only in the local dev server. Static builds include figure rendering and citations without the editor or file-saving endpoint. Slidev's built-in Markdown editor and `/notes-edit` are separate Slidev features.
+*The screenshot uses a sample image. The editor's current interface is Korean.*
+
+| Control | Action |
+| --- | --- |
+| **클릭 단계** | Select a click step |
+| **영역 추가** | Draw a new region |
+| **실행 취소** / **다시 실행** | Undo / redo |
+| **발표 화면 미리보기** | Preview without editing handles |
+| **강조 모양** | Choose a translucent fill or an outline |
+| **저장** / **변경 버리기** | Save / discard changes |
+| Arrow keys / Shift + arrow keys | Move a region in small / larger increments |
+
+Saving updates `annotations.json`. A stable `contentId` keeps highlights attached to a slide when it is reordered. Concurrent edits to the same figure are checked before saving.
+
+### Editing scope
+
+- One editable figure per `contentId`, with up to 40 click states.
+- Set `clicks` in Markdown before editing highlight steps. Each step stores its own regions.
+- Check alignment after changing a figure's crop or dimensions.
+- Mermaid structure is edited in its source file.
+
+The local dev server provides the editor and save endpoint. Static builds contain the figures, highlights, and citations. Slidev provides the **Slide** and **Notes** editors separately.
 
 ## Configuration
 
-`authoring()` accepts `root` (required absolute path), `entry`, `annotations`, and `references` (relative paths inside that root). Defaults are `slides.md`, `annotations.json`, and `references.json`.
+### Deck files
 
-Optional `renderImage({ src, caption, escape })` returns custom markup for a deck-specific image, or `undefined` to use the standard editable figure. `markdownSetup(md)` adds deck-specific Markdown behavior after the addon. No bibliography or diagram data is bundled into the package.
+Paths are relative to `root` and must stay inside it.
 
-Use CSS variables to match a theme:
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `root` | Required | Absolute deck directory |
+| `entry` | `slides.md` | Slide source |
+| `annotations` | `annotations.json` | Highlight data |
+| `references` | `references.json` | Bibliography |
+
+### Markdown extensions
+
+| Option | Purpose |
+| --- | --- |
+| `renderImage({ src, caption, escape })` | Return custom markup for a deck-specific image, or `undefined` to use the editable figure. |
+| `markdownSetup(md)` | Add deck-specific Markdown rules after the addon. |
+
+### Appearance
+
+Set CSS variables in the deck to match its theme:
 
 ```css
 :root {
@@ -83,7 +140,7 @@ Use CSS variables to match a theme:
 }
 ```
 
-`.authoring-visual` fills its parent by default. Set a height for that parent or customize the class in the deck when using a layout without a dedicated figure slot.
+`.authoring-visual` fills its parent by default. The theme defines the surrounding slide layout.
 
 ## Development
 
@@ -93,4 +150,4 @@ npm test
 npm pack
 ```
 
-The package ships Vue source directly, following Slidev's addon convention. It includes no seminar content, deployment configuration, or mandatory theme dependency.
+The package ships Vue source directly. Usage screenshots in `guide/` belong to the repository documentation and are excluded from the npm package.
