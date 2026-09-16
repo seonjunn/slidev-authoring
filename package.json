@@ -12,10 +12,8 @@
     "slidev"
   ],
   "engines": {
-    "node": ">=22.12.0"
-  },
-  "slidev": {
-    "engines": ">=52.19.1"
+    "node": ">=22.12.0",
+    "slidev": "52.19.1"
   },
   "exports": {
     "./vite": "./vite.mjs",
