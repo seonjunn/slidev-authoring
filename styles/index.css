@@ -1,0 +1,2 @@
+.authoring-visual { height:100%; min-height:0; }
+.authoring-cite { color:var(--authoring-cite-color, #828997); font:var(--authoring-cite-size, 10.5px)/1 Arial,sans-serif; vertical-align:super; margin-left:4px; white-space:nowrap; }
