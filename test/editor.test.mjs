@@ -65,3 +65,36 @@ test('ordinary Markdown images, tables and citations render without authored HTM
   assert.match(result,/<AuthoringReferences :ids='\[1,2\]' \/>/)
   assert.deepEqual(citationIds('A [2] and [1, 2]; [3](https://example.org); `array[4]`'),[1,2])
 })
+
+test('figure and per-region colors survive saves without changing geometry or other slides', async t => {
+  const {store,payload,root,source}=await fixture(t)
+  const p=await payload('one'), two=await store.get('two','/figures/b.png')
+  p.focusColor='#397DA8'; p.regions[1][0].push('#21877E')
+  const saved=await store.save(p)
+  assert.equal(saved.entry.focusColor,'#397DA8')
+  assert.deepEqual(saved.entry.regions,[[],[[10,20,30,40,'#21877E']]])
+  assert.deepEqual(await store.get('two','/figures/b.png'),two)
+  assert.equal(await readFile(join(root,'slides.md'),'utf8'),source)
+  const reset=await payload('one'); delete reset.focusColor; reset.regions[1][0].pop()
+  const original=await store.save(reset)
+  assert.equal(Object.hasOwn(original.entry,'focusColor'),false)
+  assert.deepEqual(original.entry.regions,[[],[[10,20,30,40]]])
+})
+
+test('invalid colors cannot modify annotations', async t => {
+  const {store,payload,root}=await fixture(t), p=await payload('one')
+  const initial=await readFile(join(root,'annotations.json'),'utf8')
+  for (const color of ['red','#abc','#12345678','url(https://example.org)',null,12]) {
+    await assert.rejects(store.save({...p,focusColor:color}),e=>e.status===400)
+    await assert.rejects(store.save({...p,regions:[[],[[10,20,30,40,color]]]}),e=>e.status===400)
+  }
+  assert.equal(await readFile(join(root,'annotations.json'),'utf8'),initial)
+})
+
+test('display colors fall back from region to figure to theme', async () => {
+  const {highlightStyle}=await import('../lib/colors.mjs')
+  assert.deepEqual(highlightStyle([1,2,3,4]),{})
+  assert.deepEqual(highlightStyle([1,2,3,4],'#397DA8'),{'--region-highlight':'#397DA8'})
+  assert.deepEqual(highlightStyle([1,2,3,4,'#21877E'],'#397DA8'),{'--region-highlight':'#21877E'})
+  assert.deepEqual(highlightStyle([1,2,3,4,'invalid'],'invalid'),{})
+})

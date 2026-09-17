@@ -79,7 +79,8 @@ clicks: 1
 2. Hover over the figure and select **그림 강조 편집**.
 3. Choose the click step, then select an existing region or add one.
 4. Drag to move a region; use its corner handles to resize it.
-5. Preview the result and select **저장** to save.
+5. Choose a preset or a custom color for the selected region. Select **그림 기본색 편집** to change the default across click steps.
+6. Preview the result and select **저장** to save.
 
 ![Figure editor showing a selected region, click-step selector, preview, and save controls](guide/images/figure-editor.png)
 
@@ -92,10 +93,31 @@ clicks: 1
 | **실행 취소** / **다시 실행** | Undo / redo |
 | **발표 화면 미리보기** | Preview without editing handles |
 | **강조 모양** | Choose a translucent fill or an outline |
+| **영역 색상** / **그림 기본색** | Use purple, blue, teal, amber, rose, or a custom color |
+| **사용자 지정** | Use the color picker or enter a six-digit `#RRGGBB` value |
+| **그림 기본색 사용** / **테마 색상 사용** | Remove a region override / restore the theme default |
 | **저장** / **변경 버리기** | Save / discard changes |
 | Arrow keys / Shift + arrow keys | Move a region in small / larger increments |
 
 Saving updates `annotations.json`. A stable `contentId` keeps highlights attached to a slide when it is reordered. Concurrent edits to the same figure are checked before saving.
+
+Colors can distinguish different roles within the same figure. A region color affects only that region in that click step. A figure default affects all regions without an override, across all steps. Changing colors supports undo/redo and keeps coordinates unchanged. Existing annotations inherit the theme color.
+
+### Annotation colors
+
+The original `[x, y, width, height]` regions remain valid. A fifth value overrides a region's color; optional `focusColor` sets the figure default. Colors are six-digit hex values. Both fills and outlines use them.
+
+```json
+{
+  "example": {
+    "src": "/figures/example.png",
+    "ratio": 2,
+    "focusStyle": "wash",
+    "focusColor": "#7655AB",
+    "regions": [[], [[10, 20, 30, 40, "#21877E"], [55, 20, 30, 40]]]
+  }
+}
+```
 
 ### Editing scope
 
