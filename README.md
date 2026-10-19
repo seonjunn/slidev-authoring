@@ -1,10 +1,10 @@
 # Slidev Authoring
 
-Markdown citations and a visual figure-highlight editor for Slidev. Annotations and bibliography data are stored in the deck.
+Markdown citations, a visual figure-highlight editor, and PowerPoint export for Slidev. Annotations and bibliography data are stored in the deck.
 
 **Requirements:** Node.js 22.12+ and Slidev 52.19.1. Tested with Vue 3.5 and Vite 8.2.2.
 
-[Setup](#setup) · [Editing](#edit-highlights) · [Configuration](#configuration)
+[Setup](#setup) · [Editing](#edit-highlights) · [PowerPoint](#export-to-powerpoint) · [Configuration](#configuration)
 
 ## Setup
 
@@ -127,6 +127,68 @@ The original `[x, y, width, height]` regions remain valid. A fifth value overrid
 - Mermaid structure is edited in its source file.
 
 The local dev server provides the editor and save endpoint. Static builds contain the figures, highlights, and citations. Slidev provides the **Slide** and **Notes** editors separately.
+
+## Export to PowerPoint
+
+`slidev-pptx` converts a deck into an editable `.pptx` and writes a report of what it could not convert.
+
+```sh
+npm install -D playwright-chromium
+npx playwright install chromium
+npx slidev-pptx slides.md -o deck.pptx
+```
+
+It starts the deck's Slidev dev server, reads every slide at every click step in Chromium, and writes:
+
+| Output | Contents |
+| --- | --- |
+| `deck.pptx` | Text boxes with real bullets, native tables, shapes and connectors for diagrams, pictures, Office equations, speaker notes, sections, and click animations |
+| `deck.report.md` and `deck.report/` | Items to fix by hand, places where the shape check disagrees with the browser, and things to confirm in PowerPoint |
+
+### Click steps
+
+Each Slidev click becomes one PowerPoint click.
+
+- A highlight that changes only colour or weight is an emphasis effect on a single shape, so its text is edited once.
+- A shape whose text changes between clicks becomes stacked copies that appear and disappear. Edit every copy; the report lists the slides.
+- A heavier outline is a separate outline shape drawn over the original while it applies.
+
+### The report
+
+| Section | Meaning |
+| --- | --- |
+| Items to fix | Content the converter dropped or replaced with a picture: rotated elements, inset shadows, `::before`/`::after` content, background images, `<canvas>`/`<video>`/`<iframe>`, SVG gradient fills. Each item has a crop of the original slide. |
+| Shape check | Click steps whose LibreOffice rendering differs from the browser by more than the threshold, shown side by side |
+| Confirm in PowerPoint | Approximations, font substitutions, equations, Korean text, stacked copies, and the animations themselves |
+
+Give the report and the PPTX to a person or an agent to finish the items. Shape names in the report match the PowerPoint Selection Pane.
+
+### Shape check
+
+The check draws every click step with LibreOffice: a local `soffice` with `pdftoppm`, otherwise Docker. The Docker image `slidev-authoring-libreoffice:1` is built on first use, which takes several minutes. Without either, the check is skipped and the report says so.
+
+The check compares where each click step should end up. It does not play the animations, and LibreOffice cannot draw Office equations, so equations are excluded. Before presenting, step through the slide show in PowerPoint.
+
+### Options
+
+| Option | Purpose |
+| --- | --- |
+| `-o, --out <file>` | Output path. Default: `<deck folder>.pptx` |
+| `--slides <range>` | Convert part of the deck, such as `1-5,8` |
+| `--url <url>` | Use a Slidev server that is already running |
+| `--trail <selector>` | Element shown in the layout's small header placeholder, such as a breadcrumb |
+| `--profile hcs\|generic` | Slide frame. Default: `hcs` for `slidev-theme-hcs`, otherwise `generic` |
+| `--no-check` | Skip the shape check |
+| `--threshold <percent>` | Difference that marks a click step in the shape check. Default: `3` |
+| `--strict` | Exit with code 2 when items need fixing |
+
+`pptx.trail` in the first frontmatter block sets `--trail` for the deck.
+
+### Themes and fonts
+
+Decks on `slidev-theme-hcs` get a matching master with title, section, title-only, and closing layouts, including the footer and slide numbers. Other themes use a generic frame: titles become title placeholders and the rest of the slide stays as shapes.
+
+Text is laid out with fonts metric-compatible with the PowerPoint fonts it maps to, so line breaks match. Other families map to Arial, Georgia, or Consolas; the report lists each substitution.
 
 ## Configuration
 
